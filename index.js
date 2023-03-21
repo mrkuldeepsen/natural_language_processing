@@ -15,6 +15,7 @@ const Recorder = require('audio-recorder-js');
 
 
 
+
 const app = express()
 const PORT  = process.env.PORT || 5001 ;
 
@@ -28,51 +29,38 @@ app.set("view engine", "ejs");
 
 const accessKey = process.env.Access_key;
 const handle = new Leopard(accessKey);
+const ans = [] ;
 
 app.get('/', async (req,res) => {
-    try {
-        const audioPath = path.resolve('./public/data/demo.mp3');
-        const result = handle.processFile(audioPath)
-        console.log(result.transcript);
-        res.status(200).render('home');
-    }
-    catch(error){
-        res.status(400).json(error);
-        throw new Error(error);
-    }
+    res.status(200).render('home',{
+        values:ans,
+    });
 
 })
 // Train and save the model.
 const nlp = new NlpManager({ languages: ['en'], threshold: 0.5 });
 nlp.container.register('fs', fs);
-app.use(LangEn);
+//app.use(LangEn);
 
 const connector = new ConsoleConnector();
 connector.onHear = async (parent, line) => {
   
-        const result = await nlp.process(line);
+         result = await nlp.process(line);
         if(result.answer){
+            ans.push(result.answer);
             connector.say(result.answer);
+            
         }else{
+            ans.push(result.answer);
             connector.say('i am not capable');
         }
   
-      
-
 };
 
 (async () => {
     await trainnlp(nlp);
     connector.say('Ask me');
 })();
-
-// record audio
-
- 
-
-
-
-
 
 
 app.listen(PORT,()=>{
